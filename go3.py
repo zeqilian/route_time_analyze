@@ -42,6 +42,7 @@ df = df.dropna()
 df = df.groupby(['time_range', 'route']).agg(OrderedDict([
     ('duration_sec', ['max', 'median', 'min']),
     ('distance', ['max', 'median', 'min']),
+    ('vehicle_id', ['count']),
 ])).reset_index()
 
 #print(df)
@@ -54,7 +55,8 @@ df = df.groupby(['time_range', 'route']).agg(OrderedDict([
 
 # print(df.columns.droplevel(1))
 df.columns = ['time_range', 'route', 'max_duration', 'median_duration',
-              'min_duration', 'max_distance', 'median_distance', 'min_distance']
+              'min_duration', 'max_distance', 'median_distance', 'min_distance', 'route_count']
+df = df[df.route_count >= 2]
 
 time_route_df = df.sort_values(by=['time_range', 'median_duration'], ascending=[True, False])
 

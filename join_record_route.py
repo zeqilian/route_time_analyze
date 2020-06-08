@@ -5,6 +5,7 @@
 
 from datetime import datetime
 
+import pandas as pd
 
 class Route(object):
 
@@ -87,25 +88,24 @@ def map_same_route(route):
   return same_route_map.get(route, route)
 
 
-def go():
+def join_record_route():
+  df = pd.read_csv('record_data.csv')
+  df = df[df.time_cost > 60]
+  df['route'].fillna('', inplace=True)
   routes = {}
-  for line in open('record_data.csv'):
-    record_id, vc_trip_id, date_str, vehicle_id, time_str, route, vehicle_mode, total_distance, total_time, total_auto_time, distance, time_cost, start_timestamp, end_timestamp = line.strip(
-    ).split(',')
-    route = map_same_route(route)
+  for _, row in df.iterrows():
+    route = map_same_route(row.route)
     if not route:
         continue
-    if record_id == 'id':
-      continue
-    if vehicle_id not in routes:
-      routes[vehicle_id] = []
+    if row.vehicle_id not in routes:
+      routes[row.vehicle_id] = []
       last_route = Route()
     else:
-      last_route = routes[vehicle_id][-1]
-    if not last_route.is_same_route(int(start_timestamp), route):
-      last_route = Route(record_id, vehicle_id, date_str, time_str, distance, last_route)
-      routes[vehicle_id].append(last_route)
-    last_route.update_info(int(start_timestamp), int(end_timestamp), route, int(distance))
+      last_route = routes[row.vehicle_id][-1]
+    if not last_route.is_same_route(row.start_timestamp, route):
+      last_route = Route(row.id, row.vehicle_id, row.date, row.time, row.distance, last_route)
+      routes[row.vehicle_id].append(last_route)
+    last_route.update_info(row.start_timestamp, row.end_timestamp, route, row.distance)
 
   return routes
 
@@ -119,5 +119,5 @@ def print_routes(routes):
 
 if __name__ == '__main__':
   #print(Route.get_timestamp('20200604', '092518'))
-  routes = go()
+  routes = join_record_route()
   print_routes(routes)
