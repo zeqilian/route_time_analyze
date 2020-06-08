@@ -13,7 +13,10 @@ unique_routes = route_df['route'].unique()
 for route in unique_routes:
   print(route)
 
-print('df_count', len(route_df))
+print('raw df_count', len(route_df))
+route_df = route_df[route_df.duration_sec >= 15*60]
+
+print('after filter short duration df_count', len(route_df))
 
 df = route_df.groupby(['route']).agg({
     'duration_sec': ['max', 'median', 'min'],
@@ -25,15 +28,12 @@ print(df)
 
 md_df = route_df.groupby(['route']).distance.max().reset_index().rename(columns={'distance': 'max_distance'})
 
-print(md_df)
-
-
 df = route_df.merge(md_df, on='route', how='left')
 df = df[df.distance >= df.max_distance * 0.3]
 #df.iloc[:,0:-1].to_csv('new_res.csv', index=False)
 #print(df)
 
-print('df_count', len(df))
+print('after filter lower df_count', len(df))
 
 df = df.iloc[:,0:-1]
 md_df = df.groupby(['route']).distance.median().reset_index().rename(columns={'distance': 'median_distance'})
@@ -41,7 +41,7 @@ md_df = df.groupby(['route']).distance.median().reset_index().rename(columns={'d
 df = df.merge(md_df, on='route', how='left')
 df = df[df.distance <= df.median_distance * 2]
 
-print('df_count', len(df))
+print('after filter upper df_count', len(df))
 df.iloc[:,0:-1].to_csv('new_res.csv', index=False)
 
 df = df.groupby(['route']).agg({
