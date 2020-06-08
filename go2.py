@@ -23,13 +23,13 @@ df = route_df.groupby(['route']).agg({
 
 print(df)
 
-md_df = route_df.groupby(['route']).distance.median().reset_index().rename(columns={'distance': 'median_distance'})
+md_df = route_df.groupby(['route']).distance.max().reset_index().rename(columns={'distance': 'max_distance'})
 
 print(md_df)
 
 
 df = route_df.merge(md_df, on='route', how='left')
-df = df[df.distance >= df.median_distance * 0.2]
+df = df[df.distance >= df.max_distance * 0.3]
 #df.iloc[:,0:-1].to_csv('new_res.csv', index=False)
 #print(df)
 
