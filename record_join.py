@@ -10,35 +10,41 @@ import pandas as pd
 
 class Route(object):
 
-  def __init__(self, record_id='', vehicle_id='', date_str='', time_str='', distance=0, last_route=None):
+  def __init__(self, record_id='', date_str='', time_str='', distance=0, last_route=None, **kwargs):
     self.record_id = record_id
-    self.vehicle_id = vehicle_id
     self.date_str = date_str
     if not date_str or time_str or not last_route or last_route.record_id == record_id:
-      self.start_time = 0
+      self.start_timestamp = 0
     else:
-      self.start_time = self.get_timestamp(date_str, time_str)
-    self.end_time = 0
+      self.start_timestamp = self.get_timestamp(date_str, time_str)
+    self.end_timestamp = 0
     self.route = ''
     self.distance = 0
+    self.ext_keys = kwargs.keys()
+    for key, value in kwargs.items():
+      self.__setattr__(key, value)
 
   def is_same_route(self, begin_time, route):
-    if begin_time - self.end_time > 3600:
+    if begin_time - self.end_timestamp > 3600:
       return False
-    if begin_time < self.end_time:
+    if begin_time < self.end_timestamp:
       return False
     if self.route and route and self.route != route:
       return False
     return True
 
   def update_info(self, start_time, end_time, route, distance):
-    if self.start_time == 0 or start_time < self.start_time:
-      self.start_time = start_time
-    if self.end_time == 0 or end_time > self.end_time:
-      self.end_time = end_time
+    if self.start_timestamp == 0 or start_time < self.start_timestamp:
+      self.start_timestamp = start_time
+    if self.end_timestamp == 0 or end_time > self.end_timestamp:
+      self.end_timestamp = end_time
     if not self.route:
       self.route = route
     self.distance += distance
+
+  @property
+  def date(self):
+    return self.date_str
 
   @classmethod
   def get_timestamp(cls, date_str, time_str):
@@ -51,22 +57,24 @@ class Route(object):
     return datetime.fromtimestamp(timestamp).strftime('%H:%M')
 
   @property
-  def run_time_sec(self):
-    return self.end_time - self.start_time
+  def duration_sec(self):
+    return self.end_timestamp - self.start_timestamp
 
   @property
-  def run_time(self):
-    seconds = self.run_time_sec
+  def duration(self):
+    seconds = self.duration_sec
     return '{}h{}m'.format(int(seconds/3600), int(seconds % 3600/60))
 
-  def __str__(self):
-    return '{},{},{},{},{},{},{},{}'.format(
-        self.get_df_row())
+  @property
+  def start_time(self):
+    return self.get_time_str(self.start_timestamp)
 
-  def get_df_row(self):
-    return (self.date_str, self.get_time_str(self.start_time), self.get_time_str(
-            self.end_time), self.vehicle_id, self.route,
-            self.run_time, self.run_time_sec, self.distance)
+  @property
+  def end_time(self):
+    return self.get_time_str(self.end_timestamp)
+
+  def get_df_row(self, header):
+    return [self.__getattribute__(key) for key in header]
 
 
 def map_same_route(route):
@@ -93,7 +101,7 @@ def map_same_route(route):
 
 def join_record_route(df):
   df = df[df.time_cost > 60]
-  df = df.fillna({'route': ''})
+  df = df.fillna('')
   routes = {}
   for _, row in df.iterrows():
     route = map_same_route(row.route)
@@ -105,17 +113,21 @@ def join_record_route(df):
     else:
       last_route = routes[row.vehicle_id][-1]
     if not last_route.is_same_route(row.start_timestamp, route):
-      last_route = Route(row.id, row.vehicle_id, row.date, row.time, row.distance, last_route)
+      ext_keys = ['vehicle_id', 'vo_ticket', 'trip_type']
+      ext_dict = dict([(key, row[key]) for key in ext_keys])
+      last_route = Route(row.id, row.date, row.time, row.distance, last_route, 
+          **ext_dict)
       routes[row.vehicle_id].append(last_route)
     last_route.update_info(row.start_timestamp, row.end_timestamp, route, row.distance)
 
+  header = ['date', 'start_time', 'end_time',
+            'route', 'duration', 'duration_sec', 'distance'] + ext_keys
   route_list = []
   for one_route_list in routes.values():
     for route in one_route_list:
-      route_list.append(route.get_df_row())
+      route_list.append(route.get_df_row(header))
 
-  df = pd.DataFrame(route_list, columns=[
-      'date', 'start_time', 'end_time', 'vehicle_id', 'route', 'duration', 'duration_sec', 'distance'])
+  df = pd.DataFrame(route_list, columns=header)
 
   return df
 
