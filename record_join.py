@@ -7,9 +7,10 @@ from datetime import datetime
 
 import pandas as pd
 
+
 class Route(object):
 
-  def __init__(self, record_id='', vehicle_id='', date_str='', time_str='', distance = 0, last_route=None):
+  def __init__(self, record_id='', vehicle_id='', date_str='', time_str='', distance=0, last_route=None):
     self.record_id = record_id
     self.vehicle_id = vehicle_id
     self.date_str = date_str
@@ -61,9 +62,12 @@ class Route(object):
 
   def __str__(self):
     return '{},{},{},{},{},{},{},{}'.format(
-        self.date_str, self.get_time_str(self.start_time), self.get_time_str(
+        self.get_df_row())
+
+  def get_df_row(self):
+    return (self.date_str, self.get_time_str(self.start_time), self.get_time_str(
             self.end_time), self.vehicle_id, self.route,
-        self.run_time, self.run_time_sec, self.distance)
+            self.run_time, self.run_time_sec, self.distance)
 
 
 def map_same_route(route):
@@ -88,15 +92,14 @@ def map_same_route(route):
   return same_route_map.get(route, route)
 
 
-def join_record_route():
-  df = pd.read_csv('record_data.csv')
+def join_record_route(df):
   df = df[df.time_cost > 60]
-  df['route'].fillna('', inplace=True)
+  df = df.fillna({'route': ''})
   routes = {}
   for _, row in df.iterrows():
     route = map_same_route(row.route)
     if not route:
-        continue
+      continue
     if row.vehicle_id not in routes:
       routes[row.vehicle_id] = []
       last_route = Route()
@@ -107,17 +110,19 @@ def join_record_route():
       routes[row.vehicle_id].append(last_route)
     last_route.update_info(row.start_timestamp, row.end_timestamp, route, row.distance)
 
-  return routes
+  route_list = []
+  for one_route_list in routes.values():
+    for route in one_route_list:
+      route_list.append(route.get_df_row())
 
+  df = pd.DataFrame(route_list, columns=[
+      'date', 'start_time', 'end_time', 'vehicle_id', 'route', 'duration', 'duration_sec', 'distance'])
 
-def print_routes(routes):
-  print('date,start_time,end_time,vehicle_id,route,duration,duration_sec,distance')
-  for vehicle_id, route_list in routes.items():
-    for route in route_list:
-      print(route)
+  return df
 
 
 if __name__ == '__main__':
-  #print(Route.get_timestamp('20200604', '092518'))
-  routes = join_record_route()
-  print_routes(routes)
+  # print(Route.get_timestamp('20200604', '092518'))
+  df = pd.read_csv('record_data.csv')
+  df = join_record_route(df)
+  df.to_csv('res.csv', index=False)
