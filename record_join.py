@@ -99,7 +99,7 @@ def map_same_route(route):
   return same_route_map.get(route, route)
 
 
-def join_record_route(df):
+def join_record_route(df, for_test=False):
   df = df[df.time_cost > 60]
   df = df.fillna('')
   routes = {}
@@ -129,6 +129,10 @@ def join_record_route(df):
 
   df = pd.DataFrame(route_list, columns=header)
 
+  if for_test:
+    print(df)
+    df.to_csv('res.csv', index=False)
+
   return df
 
 
@@ -136,6 +140,4 @@ if __name__ == '__main__':
   # print(Route.get_timestamp('20200604', '092518'))
   pd.set_option('display.width', 1000)
   df = pd.read_csv('record_2020-06-15.csv')
-  df = join_record_route(df)
-  print(df)
-  df.to_csv('res.csv', index=False)
+  df = join_record_route(df, True)
