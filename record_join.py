@@ -29,7 +29,6 @@ class Route(object):
       return False
     if self.route and route and self.route != route:
       return False
-
     return True
 
   def update_info(self, start_time, end_time, route, distance):
@@ -123,6 +122,8 @@ def join_record_route(df):
 
 if __name__ == '__main__':
   # print(Route.get_timestamp('20200604', '092518'))
-  df = pd.read_csv('record_data.csv')
+  pd.set_option('display.width', 1000)
+  df = pd.read_csv('record_2020-06-15.csv')
   df = join_record_route(df)
+  print(df)
   df.to_csv('res.csv', index=False)
