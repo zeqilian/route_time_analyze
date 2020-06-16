@@ -139,5 +139,5 @@ def join_record_route(df, for_test=False):
 if __name__ == '__main__':
   # print(Route.get_timestamp('20200604', '092518'))
   pd.set_option('display.width', 1000)
-  df = pd.read_csv('record_2020-06-15.csv')
+  df = pd.read_csv('record_data.csv')
   df = join_record_route(df, True)
