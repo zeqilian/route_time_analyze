@@ -18,4 +18,5 @@ if __name__ == "__main__":
   df = filter_uncomplete_records(df)
   time_route_df, route_df = classify_route_by_time(df)
   time_route_df.to_csv('time_route_data.csv', index=False)
+  print(time_route_df.to_csv(index=False, sep='\t'))
   route_df.to_csv('route_time_data.csv', index=False)
