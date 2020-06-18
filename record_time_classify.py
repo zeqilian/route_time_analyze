@@ -36,7 +36,7 @@ def format_df(df):
 
 def classify_route_by_time(df, for_test=False):
   df['time_range'] = df.apply(get_time_range, axis=1)
-  df = df.dropna()
+  #df = df.dropna()
 
   df = df.groupby(['time_range', 'route']).agg(OrderedDict([
       ('duration_sec', ['max', 'median', 'min']),
@@ -46,8 +46,10 @@ def classify_route_by_time(df, for_test=False):
 
   df.columns = ['time_range', 'route', 'max_duration', 'median_duration',
                 'min_duration', 'max_distance', 'median_distance', 'min_distance', 'route_count']
-  df = df[df.route_count >= 2]
+  if for_test:
+    print(df)
 
+  df = df[df.route_count >= 3]
   time_route_df = df.sort_values(by=['time_range', 'median_duration'], ascending=[True, False])
 
   format_df(time_route_df)
@@ -104,6 +106,6 @@ def classify_vehicle_by_time_detail(df):
 if __name__ == '__main__':
   pd.set_option('display.width', 1000)
   df = pd.read_csv('new_res.csv')
-  #time_route_df, route_df = classify_route_by_time(df, True)
-  df = pd.read_csv('res.csv')
-  classify_vehicle_by_time(df, True)
+  time_route_df, route_df = classify_route_by_time(df, True)
+  #df = pd.read_csv('res.csv')
+  #classify_vehicle_by_time(df, True)
