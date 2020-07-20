@@ -13,7 +13,7 @@ from record_time_classify import classify_route_by_time
 if __name__ == "__main__":
   #df = pd.read_csv('record_data.csv')
   #df = pd.read_csv('record_2020-06-15.csv')
-  df = get_data_from_db(count=5000)
+  df = get_data_from_db(count=3000)
   df = join_record_route(df)
   df = filter_uncomplete_records(df)
   time_route_df, route_df = classify_route_by_time(df)

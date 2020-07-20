@@ -7,6 +7,7 @@ import pandas as pd
 
 def filter_uncomplete_records(route_df, for_test=False):
 
+  route_df = route_df[route_df.route != '']
   unique_routes = route_df['route'].unique()
   if for_test:
     for route in unique_routes:

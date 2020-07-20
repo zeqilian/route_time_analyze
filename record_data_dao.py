@@ -36,7 +36,7 @@ def get_data_from_db(**kwargs):
         FLOOR(start_timestamp) as start_timestamp, \
         FLOOR(end_timestamp) as end_timestamp, \
         vo_ticket, trip_type \
-      from record join route_interval on record.id=route_interval.record_id \
+      from record left join route_interval on record.id=route_interval.record_id \
       where map_name='cybertron' \
       order by date desc, time asc, start_timestamp asc \
       limit :count\
@@ -50,6 +50,6 @@ def get_data_from_db(**kwargs):
 
 if __name__ == '__main__':
   pd.set_option('display.width', 1000)
-  df = get_data_from_db(count=5)
-  print(df)
+  df = get_data_from_db(count=5000)
+  print(df.head(5))
   df.to_csv('record_data.csv', index=False)
