@@ -9,16 +9,17 @@ import datetime
 import pandas as pd
 
 from record_time_classify import classify_vehicle_by_time_detail
+import record_time_classify
 
 pd.set_option('display.width', 1000)
 
 
 @click.group()
-def print_data_tools():
+def record_data_tools():
     pass
 
 
-@print_data_tools.command()
+@record_data_tools.command()
 @click.argument('route')
 def route_data(route):
     df = pd.read_csv('record_data.csv')
@@ -34,28 +35,31 @@ def route_data(route):
     click.echo(df[df.route == route])
 
 
-@print_data_tools.command()
+@record_data_tools.command()
 @click.argument('record_id', type=int)
 def record_data(record_id):
     df = pd.read_csv('record_data.csv')
     click.echo(df[df.id == record_id])
 
 
-@print_data_tools.command()
-def go():
+@record_data_tools.command()
+def driver_time():
     df = pd.read_csv('record_data.csv')
-    df = df[(df.date >= 20200516) & (df.date < 20200615)]
-    #click.echo(df[df.time_cost <= 60])
-    click.echo(df.groupby('vc_trip_id').count().count())
+    df = df[df.date >= 20200727].dropna(subset=['start_timestamp'])
+    df = record_time_classify.add_time_slot_col(df, 'start_timestamp',
+                                                record_time_classify.time_slot_whole_day)
+    df = df.groupby(['safety_driver', 'time_slot'])['total_time'].sum().reset_index()
+    df['total_time'] = df['total_time'].apply(record_time_classify.format_time)
+    click.echo(df)
+    df.to_csv('driver_time.csv', index=False)
 
 
-@print_data_tools.command()
+@record_data_tools.command()
 def vehicle_by_time():
     df = pd.read_csv('res.csv')
     #df = df[df.duration_sec >= 15 * 60]
     click.echo(df)
 
-    now = datetime.date.today()
     #time_list = [now - datetime.timedelta(days=n) for n in (0, 30, 60, 90)]
     #time_list = [int(d.strftime('%Y%m%d')) for d in time_list]
     time_list = [20200615, 20200516]
@@ -75,4 +79,4 @@ def vehicle_by_time():
 
 
 if __name__ == '__main__':
-    print_data_tools()
+    record_data_tools()
